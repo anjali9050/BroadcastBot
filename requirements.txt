@@ -3,3 +3,6 @@ tgcrypto
 aiofiles
 motor
 dnspython
+lk21
+Flask==2.2.2
+gunicorn==20.1.0
