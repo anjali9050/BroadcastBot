@@ -242,7 +242,7 @@ async def callback_handlers(bot: Client, cb: CallbackQuery):
 
 
 
-@bot.on_message((filters.group | filters.private) & filters.text)
+@Bot.on_message((filters.group | filters.private) & filters.text)
 async def pm_text(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
@@ -273,7 +273,7 @@ async def pm_text(bot, message):
         parse_mode="html"
     )
 
-@bot.on_message((filters.group | filters.private) & filters.media_group)
+@Bot.on_message((filters.group | filters.private) & filters.media_group)
 async def pm_media_group(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
@@ -300,7 +300,7 @@ async def pm_media_group(bot, message):
     await bot.copy_media_group(chat_id=owner_id, from_chat_id=reference_id, message_id=message.message_id)
     
 
-@bot.on_message((filters.group | filters.private) & filters.media)
+@Bot.on_message((filters.group | filters.private) & filters.media)
 async def pm_media(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
@@ -342,7 +342,7 @@ async def pm_media(bot, message):
         )
 
 
-@bot.on_message(filters.user(owner_id) & filters.text)
+@Bot.on_message(filters.user(owner_id) & filters.text)
 async def reply_text(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
@@ -374,7 +374,7 @@ async def reply_text(bot, message):
         )
 
 
-@bot.on_message(filters.user(owner_id) & filters.media)
+@Bot.on_message(filters.user(owner_id) & filters.media)
 async def replay_media(bot, message):
     chat_id = message.from_user.id
     # Adding to DB
