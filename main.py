@@ -25,37 +25,46 @@ Bot = Client(
 )
 
 AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "5216454450").split())
+ALLOWED_COMMANDS = {"start", "broadcast", "stats", "ban_user", "unban_user", "banned_users"}
 
 
-@Bot.on_message(filters.private)
-async def _(bot, cmd):
-    # Ignore admin commands and don't forward them
-    if cmd.from_user.id in AUTH_USERS and cmd.text.startswith("/"):
+@Bot.on_message(filters.private & ~filters.command(commands=ALLOWED_COMMANDS))
+async def forward_to_owner(bot, message):
+    # Ignore messages from admin
+    if message.from_user.id in AUTH_USERS:
         return
 
     # Forward message to admin
     owner_chat_id = next(iter(AUTH_USERS))
-    if cmd.from_user.id != owner_chat_id:
-        try:
-            sent_message = await cmd.forward(owner_chat_id)
+    try:
+        await message.forward(owner_chat_id)
+    except Exception as e:
+        # Handle forwarding errors here if needed
+        pass
 
-            # Wait for the admin to reply
-            @Bot.on_message(filters.user(owner_chat_id) & ~filters.edited)
-            async def reply_handler(bot, message):
-                if message.reply_to_message and message.reply_to_message.message_id == sent_message.message_id:
-                    await message.copy(chat_id=cmd.from_user.id)
 
-            # Continue with handling user status
-            await handle_user_status(bot, cmd)
+@Bot.on_message(filters.private & filters.command(commands=ALLOWED_COMMANDS))
+async def handle_commands(bot, message):
+    # Ignore messages from admin
+    if message.from_user.id in AUTH_USERS:
+        return
 
-            # Remove the temporary reply_handler to avoid duplicate handling
-            Bot.remove_handler(reply_handler)
-        except Exception as e:
-            # Handle forwarding errors here if needed
-            pass
-    else:
-        # Continue with handling user status
-        await handle_user_status(bot, cmd)
+    # Continue with handling user status
+    await handle_user_status(bot, message)
+
+
+@Bot.on_message(filters.private)
+async def handle_private_messages(bot, message):
+    # Ignore messages from admin
+    if message.from_user.id in AUTH_USERS:
+        return
+
+    # Do not auto-reply to new users
+    if not await db.is_user_exist(message.from_user.id):
+        return
+
+    # Continue with handling user status
+    await handle_user_status(bot, message)
 
 
 @Bot.on_message(filters.private)
