@@ -258,10 +258,9 @@ async def pm_text(bot, message):
         await reply_text(bot, message)
         return
     info = await bot.get_users(user_ids=message.from_user.id)
-    reference_id = int(message.chat.id)
     await bot.send_message(
         chat_id=owner_id,
-        text=IF_TEXT.format(reference_id, info.first_name, message.text)
+        text=IF_TEXT.format(message.chat.id, message.from_user.id, info.first_name, message.text)
     )
 
 
