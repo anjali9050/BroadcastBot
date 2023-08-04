@@ -42,7 +42,6 @@ async def _(bot, cmd):
 
 @Bot.on_message(filters.command("start") & filters.private)
 async def startprivate(client, message):
-    # return
     chat_id = message.from_user.id
     if not await db.is_user_exist(chat_id):
         data = await client.get_me()
@@ -229,8 +228,7 @@ async def callback_handlers(bot: Client, cb: CallbackQuery):
                             f"NOTIFICATION  {'🔔' if ((await db.get_notif(user_id)) is True) else '🔕'}",
                             callback_data="notifon",
                         )
-                    ],
-                    [InlineKeyboardButton("❎", callback_data="closeMeh")],
+                    ]
                 ]
             ),
         )
@@ -241,13 +239,9 @@ async def callback_handlers(bot: Client, cb: CallbackQuery):
         await cb.message.delete(True)
 
 
-
-
-
 @Bot.on_message((filters.group | filters.private) & filters.text)
 async def pm_text(bot, message):
     chat_id = message.from_user.id
-    # Adding to DB
     if not await db.is_user_exist(chat_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
@@ -272,13 +266,13 @@ async def pm_text(bot, message):
     await bot.send_message(
         chat_id=owner_id,
         text=IF_TEXT.format(reference_id, info.first_name, message.text),
-        parse_mode="html"
+        parse_mode="markdown"
     )
+
 
 @Bot.on_message((filters.group | filters.private) & filters.media_group)
 async def pm_media_group(bot, message):
     chat_id = message.from_user.id
-    # Adding to DB
     if not await db.is_user_exist(chat_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
@@ -305,7 +299,6 @@ async def pm_media_group(bot, message):
 @Bot.on_message((filters.group | filters.private) & filters.media)
 async def pm_media(bot, message):
     chat_id = message.from_user.id
-    # Adding to DB
     if not await db.is_user_exist(chat_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
@@ -328,11 +321,6 @@ async def pm_media(bot, message):
     info = await bot.get_users(user_ids=message.from_user.id)
     reference_id = int(message.chat.id)
     if message.media_group_id is not None:
-        # media = []
-        # async for m in bot.iter_history(message.chat.id, message.media_group_id):
-        #     print(m)
-        #     media.append(message.photo)
-        # bot.send_media_group(chat_id=owner_id, media=media)
         return
     else:
         await bot.copy_message(
@@ -340,14 +328,13 @@ async def pm_media(bot, message):
             from_chat_id=message.chat.id,
             message_id=message.message_id,
             caption=IF_CONTENT.format(reference_id, info.first_name),
-            parse_mode="html"
+            parse_mode="markdown"
         )
 
 
 @Bot.on_message(filters.user(owner_id) & filters.text)
 async def reply_text(bot, message):
     chat_id = message.from_user.id
-    # Adding to DB
     if not await db.is_user_exist(chat_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
@@ -370,8 +357,6 @@ async def reply_text(bot, message):
             pass
         await bot.send_message(
             chat_id=int(reference_id),
-            #from_chat_id=message.chat.id,
-            #message_id=message.message_id,
             text=message.text
         )
 
@@ -379,7 +364,6 @@ async def reply_text(bot, message):
 @Bot.on_message(filters.user(owner_id) & filters.media)
 async def replay_media(bot, message):
     chat_id = message.from_user.id
-    # Adding to DB
     if not await db.is_user_exist(chat_id):
         data = await bot.get_me()
         BOT_USERNAME = data.username
@@ -399,21 +383,21 @@ async def replay_media(bot, message):
             reference_id = file.caption.split()[2]
         except Exception:
             pass
-        # check if media is group of media
         if message.media_group_id is not None:
             await bot.copy_message(
                 chat_id=int(reference_id),
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
                 caption=message.caption,
-                parse_mode="html"
+                parse_mode="markdown"
             )
         else:
             await bot.copy_message(
                 chat_id=int(reference_id),
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
-                parse_mode="html"
+                parse_mode="markdown"
             )
+
 
 Bot.run()
