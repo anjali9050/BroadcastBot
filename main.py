@@ -4,7 +4,7 @@ import logging
 
 from pyrogram import Client, filters, enums
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram import ParseMode
+from telegram.constants import ParseMode
 import config
 
 from handlers.broadcast import broadcast
