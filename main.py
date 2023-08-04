@@ -2,8 +2,8 @@ import os
 import traceback
 import logging
 
-from pyrogram import Client, filters
-from pyrogram import StopPropagation
+from pyrogram import Client
+from pyrogram import StopPropagation, filters
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 import config
@@ -12,10 +12,12 @@ from handlers.check_user import handle_user_status
 from handlers.database import Database
 
 LOG_CHANNEL = config.LOG_CHANNEL
+AUTH_USERS = config.AUTH_USERS
 DB_URL = config.DB_URL
 DB_NAME = config.DB_NAME
 
 db = Database(DB_URL, DB_NAME)
+
 
 Bot = Client(
     "BroadcastBot",
@@ -23,49 +25,6 @@ Bot = Client(
     api_id=config.API_ID,
     api_hash=config.API_HASH,
 )
-
-AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "5216454450").split())
-ALLOWED_COMMANDS = {"start", "broadcast", "stats", "ban_user", "unban_user", "banned_users"}
-
-
-@Bot.on_message(filters.private & ~filters.command(commands=ALLOWED_COMMANDS))
-async def forward_to_owner(bot, message):
-    # Ignore messages from admin
-    if message.from_user.id in AUTH_USERS:
-        return
-
-    # Forward message to admin
-    owner_chat_id = next(iter(AUTH_USERS))
-    try:
-        await message.forward(owner_chat_id)
-    except Exception as e:
-        # Handle forwarding errors here if needed
-        pass
-
-
-@Bot.on_message(filters.private & filters.command(commands=ALLOWED_COMMANDS))
-async def handle_commands(bot, message):
-    # Ignore messages from admin
-    if message.from_user.id in AUTH_USERS:
-        return
-
-    # Continue with handling user status
-    await handle_user_status(bot, message)
-
-
-@Bot.on_message(filters.private)
-async def handle_private_messages(bot, message):
-    # Ignore messages from admin
-    if message.from_user.id in AUTH_USERS:
-        return
-
-    # Do not auto-reply to new users
-    if not await db.is_user_exist(message.from_user.id):
-        return
-
-    # Continue with handling user status
-    await handle_user_status(bot, message)
-
 
 @Bot.on_message(filters.private)
 async def _(bot, cmd):
@@ -89,16 +48,35 @@ async def startprivate(client, message):
     joinButton = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("CHANNEL", url="https://t.me/BABA1920Prediction"),
+                InlineKeyboardButton("CHANNEL", url="https://t.me/nacbots"),
                 InlineKeyboardButton(
-                    "SUPPORT GROUP", url="https://t.me/BABA1920Prediction"
+                    "SUPPORT GROUP", url="https://t.me/n_a_c_bot_developers"
                 ),
             ]
         ]
     )
-    welcomed = f"Hey <b>{message.from_user.first_name}</b>\nI'm a simple Telegram bot that can broadcast messages and media to the bot subscribers. Made by @BABA1920Prediction."
+    welcomed = f"Hey <b>{message.from_user.first_name}</b>\nI'm a simple Telegram bot that can broadcast messages and media to the bot subscribers. Made by @NACBOTS.\n\n 🎚 use /settings"
     await message.reply_text(welcomed, reply_markup=joinButton)
     raise StopPropagation
+
+
+@Bot.on_message(filters.command("settings"))
+async def opensettings(bot, cmd):
+    user_id = cmd.from_user.id
+    await cmd.reply_text(
+        f"`Here You Can Set Your Settings:`\n\nSuccessfully setted notifications to **{await db.get_notif(user_id)}**",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        f"NOTIFICATION  {'🔔' if ((await db.get_notif(user_id)) is True) else '🔕'}",
+                        callback_data="notifon",
+                    )
+                ],
+                [InlineKeyboardButton("❎", callback_data="closeMeh")],
+            ]
+        ),
+    )
 
 
 @Bot.on_message(filters.private & filters.command("broadcast"))
