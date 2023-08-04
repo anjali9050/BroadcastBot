@@ -24,7 +24,7 @@ Bot = Client(
     api_hash=config.API_HASH,
 )
 
-AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "5216454450").split())
+AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "1864861524").split())
 
 
 @Bot.on_message(filters.private)
