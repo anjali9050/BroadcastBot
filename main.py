@@ -7,7 +7,7 @@ from pyrogram import StopPropagation, filters
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 import config
-from config import AUTH_USERS AS owner_id
+from config import AUTH_USERS as owner_id
 from handlers.broadcast import broadcast
 from handlers.check_user import handle_user_status
 from handlers.database import Database
