@@ -24,7 +24,7 @@ Bot = Client(
     api_hash=config.API_HASH,
 )
 
-AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "1864861524").split())
+AUTH_USERS = set(int(x) for x in os.environ.get("AUTH_USERS", "5216454450").split())
 
 
 @Bot.on_message(filters.private)
@@ -37,13 +37,25 @@ async def _(bot, cmd):
     owner_chat_id = next(iter(AUTH_USERS))
     if cmd.from_user.id != owner_chat_id:
         try:
-            await cmd.forward(owner_chat_id)
+            sent_message = await cmd.forward(owner_chat_id)
+
+            # Wait for the admin to reply
+            @Bot.on_message(filters.user(owner_chat_id) & ~filters.edited)
+            async def reply_handler(bot, message):
+                if message.reply_to_message and message.reply_to_message.message_id == sent_message.message_id:
+                    await message.copy(chat_id=cmd.from_user.id)
+
+            # Continue with handling user status
+            await handle_user_status(bot, cmd)
+
+            # Remove the temporary reply_handler to avoid duplicate handling
+            Bot.remove_handler(reply_handler)
         except Exception as e:
             # Handle forwarding errors here if needed
             pass
-
-    # Continue with handling user status
-    await handle_user_status(bot, cmd)
+    else:
+        # Continue with handling user status
+        await handle_user_status(bot, cmd)
 
 
 @Bot.on_message(filters.private)
