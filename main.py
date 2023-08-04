@@ -2,9 +2,8 @@ import os
 import traceback
 import logging
 
-from pyrogram import Client
-from pyrogram import StopPropagation, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram import Client, filters
+from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 
 import config
 
@@ -27,7 +26,6 @@ DB_URL = config.DB_URL
 DB_NAME = config.DB_NAME
 
 db = Database(DB_URL, DB_NAME)
-
 
 Bot = Client(
     "BroadcastBot",
@@ -81,8 +79,7 @@ async def opensettings(bot, cmd):
                         f"NOTIFICATION  {'🔔' if ((await db.get_notif(user_id)) is True) else '🔕'}",
                         callback_data="notifon",
                     )
-                ],
-                [InlineKeyboardButton("❎", callback_data="closeMeh")],
+                ]
             ]
         ),
     )
@@ -108,7 +105,6 @@ async def sts(c, m):
         text=f"**Total Users in Database 📂:** `{await db.total_users_count()}`\n\n**Total Users with Notification Enabled 🔔 :** `{await db.total_notif_users_count()}`",
         quote=True
     )
-
 
 @Bot.on_message(filters.private & filters.command("ban_user"))
 async def ban(c, m):
@@ -257,7 +253,7 @@ async def pm_text(bot, message):
     if is_banned is True:
         await message.reply_text(f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**")
         return
-      
+
     if message.from_user.id == owner_id:
         await reply_text(bot, message)
         return
@@ -266,7 +262,7 @@ async def pm_text(bot, message):
     await bot.send_message(
         chat_id=owner_id,
         text=IF_TEXT.format(reference_id, info.first_name, message.text),
-        parse_mode="markdown"
+        parse_mode=ParseMode.MARKDOWN
     )
 
 
@@ -288,13 +284,13 @@ async def pm_media_group(bot, message):
     if is_banned is True:
         await message.reply_text(f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**")
         return
-      
+
     if message.from_user.id == owner_id:
         await replay_media(bot, message)
         return
     reference_id = int(message.chat.id)
     await bot.copy_media_group(chat_id=owner_id, from_chat_id=reference_id, message_id=message.message_id)
-    
+
 
 @Bot.on_message((filters.group | filters.private) & filters.media)
 async def pm_media(bot, message):
@@ -314,7 +310,7 @@ async def pm_media(bot, message):
     if is_banned is True:
         await message.reply_text(f"You are Banned 🚫 to use this bot for **{ban_duration}** day(s) for the reason __{ban_reason}__ \n\n**Message from the admin 🤠**")
         return
-      
+
     if message.from_user.id == owner_id:
         await replay_media(bot, message)
         return
@@ -328,7 +324,7 @@ async def pm_media(bot, message):
             from_chat_id=message.chat.id,
             message_id=message.message_id,
             caption=IF_CONTENT.format(reference_id, info.first_name),
-            parse_mode="markdown"
+            parse_mode=ParseMode.MARKDOWN
         )
 
 
@@ -343,22 +339,20 @@ async def reply_text(bot, message):
             LOG_CHANNEL,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
-    
-    reference_id = True
-    if message.reply_to_message is not None:
-        file = message.reply_to_message
+    user_id = message.text.split(" ", 1)[0]
+    try:
+        user_id = int(user_id)
+    except BaseException:
+        await message.reply_text("Reply to a user's message to get their user ID.")
+        return
+    if len(message.text.split(" ")) > 1:
+        message_id = message.text.split(" ", 2)[2]
         try:
-            reference_id = file.text.split()[2]
-        except Exception:
-            pass
-        try:
-            reference_id = file.caption.split()[2]
-        except Exception:
-            pass
-        await bot.send_message(
-            chat_id=int(reference_id),
-            text=message.text
-        )
+            message_id = int(message_id)
+            await bot.copy_message(chat_id=user_id, from_chat_id=owner_id, message_id=message_id)
+        except BaseException:
+            await message.reply_text("Enter a valid message ID.")
+            return
 
 
 @Bot.on_message(filters.user(owner_id) & filters.media)
@@ -372,32 +366,21 @@ async def replay_media(bot, message):
             LOG_CHANNEL,
             f"#NEWUSER: \n\nNew User [{message.from_user.first_name}](tg://user?id={message.from_user.id}) started @{BOT_USERNAME} !!",
         )
-    reference_id = True
-    if message.reply_to_message is not None:
-        file = message.reply_to_message
+    user_id = message.caption.split(" ", 1)[0]
+    try:
+        user_id = int(user_id)
+    except BaseException:
+        await message.reply_text("Reply to a user's message to get their user ID.")
+        return
+    if len(message.caption.split(" ")) > 1:
+        message_id = message.caption.split(" ", 2)[2]
         try:
-            reference_id = file.text.split()[2]
-        except Exception:
-            pass
-        try:
-            reference_id = file.caption.split()[2]
-        except Exception:
-            pass
-        if message.media_group_id is not None:
-            await bot.copy_message(
-                chat_id=int(reference_id),
-                from_chat_id=message.chat.id,
-                message_id=message.message_id,
-                caption=message.caption,
-                parse_mode="markdown"
-            )
-        else:
-            await bot.copy_message(
-                chat_id=int(reference_id),
-                from_chat_id=message.chat.id,
-                message_id=message.message_id,
-                parse_mode="markdown"
-            )
+            message_id = int(message_id)
+            await bot.copy_message(chat_id=user_id, from_chat_id=owner_id, message_id=message_id)
+        except BaseException:
+            await message.reply_text("Enter a valid message ID.")
+            return
 
 
-Bot.run()
+if __name__ == "__main__":
+    Bot.run()
