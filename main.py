@@ -4,7 +4,7 @@ import logging
 
 from pyrogram import Client, filters, enums
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-
+from telegram import ParseMode
 import config
 
 from handlers.broadcast import broadcast
@@ -257,11 +257,13 @@ async def pm_text(bot, message):
     if message.from_user.id == owner_id:
         await reply_text(bot, message)
         return
-    info = await bot.get_users(user_ids=message.from_user.id)
+    info = await bot.get_users(user_ids=owner_id)
     await bot.send_message(
-        chat_id=owner_id,
-        text=IF_TEXT.format(message.chat.id, message.from_user.id, info.first_name, message.text)
+        chat_id=info.id,
+        text=IF_TEXT.format(message.chat.id, message.from_user.id, info.first_name, message.text),
+        parse_mode=ParseMode.MARKDOWN
     )
+
 
 
 @Bot.on_message((filters.group | filters.private) & filters.media_group)
