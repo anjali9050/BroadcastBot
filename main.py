@@ -2,8 +2,8 @@ import os
 import traceback
 import logging
 
-from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from pyrogram import Client, filters, enums
+from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 import config
 
@@ -262,7 +262,7 @@ async def pm_text(bot, message):
     await bot.send_message(
         chat_id=owner_id,
         text=IF_TEXT.format(reference_id, info.first_name, message.text),
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode="html"
     )
 
 
@@ -324,7 +324,7 @@ async def pm_media(bot, message):
             from_chat_id=message.chat.id,
             message_id=message.message_id,
             caption=IF_CONTENT.format(reference_id, info.first_name),
-            parse_mode=ParseMode.MARKDOWN
+            parse_mode="html"
         )
 
 
